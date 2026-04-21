@@ -77,11 +77,6 @@ anomaly-surveillance-system/
 └── main.py                     
 ```
 
-⚠️ Lưu ý:
-
-* KHÔNG push thư mục **data/**
-* KHÔNG push thư mục **weights/**
-* KHÔNG push **venv/**
 
 ---
 
