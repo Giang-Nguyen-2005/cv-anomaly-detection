@@ -1,5 +1,6 @@
 yolov8n.pt
 .venv/
+venv/
 
 # ignore file bên trong nhưng giữ folder
 results/predictions/*
