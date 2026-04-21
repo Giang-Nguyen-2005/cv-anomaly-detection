@@ -1,0 +1,38 @@
+anomaly-surveillance-system/
+├── data/                       # Chứa dữ liệu (TUYỆT ĐỐI KHÔNG push thư mục này lên Github)
+│   ├── raw/                    # Dữ liệu gốc tải về (file .avi, .mp4 của UCSD, Avenue)
+│   ├── processed/              # Dữ liệu đã qua tiền xử lý (các frame ảnh đã cắt)
+│   └── annotations/            # File nhãn (ground truth, bounding box)
+│
+├── configs/                    # Chứa các file cấu hình (Không hardcode tham số vào code)
+│   ├── yolov8_config.yaml      # Cấu hình cho model Detection
+│   ├── convlstm_config.yaml    # Cấu hình hyperparameters (learning rate, batch size epochs...)
+│   └── paths.yaml              # Định nghĩa các đường dẫn tới thư mục data, weights
+│
+├── notebooks/                  # Nơi nháp code, test thuật toán, vẽ biểu đồ (Jupyter Notebook)
+│   ├── 01_data_exploration.ipynb  # Thử nghiệm đọc video, cắt frame
+│   └── 02_test_yolo_tracking.ipynb# Chạy thử YOLOv8 + ReID xem kết quả tracking
+│
+├── src/                        # Thư mục chứa mã nguồn chính (Core Logic)
+│   ├── __init__.py
+│   ├── data/                   # Xử lý dữ liệu
+│   │   ├── extract_frames.py   # Script dùng OpenCV cắt video thành ảnh
+│   │   └── dataset.py          # Class Pytorch Dataset / Dataloader để đưa dữ liệu vào model
+│   ├── models/                 # Chứa kiến trúc các mạng Neural Network
+│   │   ├── autoencoder.py      # Định nghĩa mạng AutoEncoder
+│   │   └── convlstm.py         # Định nghĩa mạng ConvLSTM
+│   ├── tracking/               # Logic cho bài toán Tracking (ReID)
+│   │   └── deep_sort.py        # Thuật toán gán ID cho người
+│    │  └──test_yolo.py
+│   └── utils/                  # Các hàm hỗ trợ dùng chung
+│       ├── metrics.py          # Tính toán độ chính xác (IoU, AUC, F1-score...)
+│       └── visualization.py    # Hàm vẽ bounding box, vẽ heatmap vùng bất thường lên video
+│
+├── weights/                    # Thư mục chứa trọng số mô hình đã train (Model Checkpoints)
+│   ├── yolov8n.pt              # Trọng số pre-trained của YOLO
+│   └── best_autoencoder.pth    # Trọng số model của mình train được độ chính xác cao nhất
+│
+├── .gitignore                  # File báo cho Git biết bỏ qua thư mục data/, weights/, __pycache__/
+├── requirements.txt            # Danh sách các thư viện cần cài (opencv-python, torch, ultralytics...)
+├── README.md                   # Tài liệu hướng dẫn cách setup môi trường và chạy project
+└── main.py                     # File chạy luồng chính (End-to-End Pipeline từ Video -> Bất thường)

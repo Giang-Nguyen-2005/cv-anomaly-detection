@@ -1,0 +1,16 @@
+# Cấu hình mô hình ConvLSTM cho Anomaly Detection
+model:
+  input_dim: 1             # Thường dùng ảnh xám (grayscale) để giảm tải
+  hidden_dims: [64, 32, 32] # Số lượng filter trong các lớp ConvLSTM
+  kernel_size: 3           # Kích thước cửa sổ trượt
+  num_layers: 3
+
+data_loader:
+  sequence_length: 10      # Số lượng frame liên tiếp đưa vào mô hình (nhìn lại quá khứ)
+  batch_size: 8
+  resize_shape: [256, 256] # Kích thước ảnh thu nhỏ để ConvLSTM xử lý hiệu quả
+
+hyperparameters:
+  learning_rate: 0.0001
+  optimizer: "Adam"
+  loss_function: "MSE"     # Dùng Mean Squared Error để so sánh ảnh gốc và ảnh tái tạo  

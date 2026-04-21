@@ -1,0 +1,23 @@
+# Quản lý đường dẫn hệ thống
+project_name: "anomaly_detection_surveillance"
+root: "."
+
+data:
+  # Phân chia rõ ràng đường dẫn cho từng dataset
+  raw: 
+    ucsd: "data/raw/ucsd"
+    avenue: "data/raw/avenue"
+  
+  processed: 
+    ucsd: "data/processed/ucsd"
+    avenue: "data/processed/avenue"
+    
+  train_split: 0.8              
+
+weights:
+  yolo_pretrained: "weights/yolov8n.pt"
+  anomaly_checkpoints: "weights/checkpoints"
+
+outputs:
+  logs: "logs"
+  results: "results/predictions"

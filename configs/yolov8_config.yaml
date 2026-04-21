@@ -1,0 +1,17 @@
+# Cấu hình YOLOv8 & Tracking
+model_type: "yolov8n.pt"   # Sử dụng bản Nano cho nhẹ và nhanh
+task: "detect"
+
+training:
+  epochs: 100
+  imgsz: 640               # Độ phân giải đầu vào
+  batch: 16                # Điều chỉnh tùy theo VRAM của GPU
+  device: 0                # 'cpu' hoặc 0, 1... (ID của GPU)
+
+inference:
+  conf_threshold: 0.25     # Ngưỡng tin cậy để nhận diện vật thể
+  iou_threshold: 0.45      # Ngưỡng chồng lấp cho Non-Maximum Suppression
+
+tracking:
+  tracker_type: "botsort.yaml" # Thuật toán tracking (BoTSORT hoặc ByteTrack)
+  persist: True            # Duy trì ID giữa các frame
