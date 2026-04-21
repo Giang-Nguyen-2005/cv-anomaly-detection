@@ -1,6 +1,14 @@
 yolov8n.pt
 venv/
+
+# ignore file bên trong nhưng giữ folder
 results/predictions/*
-data/processed/avenue/*
-data/raw/avenue/*
+!results/predictions/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
+
+data/raw/avenue/* 
 data/raw/ucsd/*
+!data/raw/ucsd/.gitkeep
+!data/raw/avenue/.gitkeep
