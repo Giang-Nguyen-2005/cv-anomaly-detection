@@ -1,32 +1,47 @@
 import cv2
 import torch
-import yaml
+import numpy as np
 from pathlib import Path
-from torch.utils.data import Dataset, DataLoader
-
-def load_config(config_path="configs/convlstm_config.yaml"):
-    with open(config_path, "r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+from torch.utils.data import Dataset
 
 class AnomalySequenceDataset(Dataset):
-    def __init__(self, dataset_path, seq_length=10, resize_shape=(256, 256)):
+    """
+    Dataset class cho bài toán Phát hiện hành động bất thường (Anomaly Detection).
+    Hỗ trợ tạo chuỗi (sequences) từ các frame ảnh.
+    """
+    def __init__(self, dataset_path, seq_length=10, resize_shape=(128, 128)):
+        """
+        Args:
+            dataset_path (str): Đường dẫn đến thư mục Train/Test (chứa các thư mục con video).
+            seq_length (int): Độ dài chuỗi frame (số bước thời gian).
+            resize_shape (tuple): Kích thước (H, W) để resize ảnh, giúp giảm tải GPU.
+        """
         self.seq_length = seq_length
         self.resize_shape = resize_shape
         self.sequences = []
 
-        # Quét tất cả các thư mục con (các video đã được cắt thành frame)
         dataset_dir = Path(dataset_path)
-        video_folders = [d for d in dataset_dir.iterdir() if d.is_dir()]
+        if not dataset_dir.exists():
+            raise FileNotFoundError(f"⚠️ Đường dẫn không tồn tại: {dataset_path}")
+
+        # Quét các thư mục con (mỗi thư mục tương ứng với 1 video/cảnh)
+        video_folders = sorted([d for d in dataset_dir.iterdir() if d.is_dir()])
 
         for folder in video_folders:
-            # Hỗ trợ cả frame .jpg (Avenue) và .tif (UCSD)
-            frames = sorted(list(folder.glob("*.jpg")) + list(folder.glob("*.tif")))
+            # Lấy danh sách ảnh, hỗ trợ đa định dạng (.jpg cho Avenue, .tif cho UCSD)
+            frames = sorted(
+                list(folder.glob("*.jpg")) + 
+                list(folder.glob("*.png")) + 
+                list(folder.glob("*.tif"))
+            )
             
-            # Trượt cửa sổ để tạo các chuỗi (sequences)
-            # Ví dụ có 20 frame, seq=10 -> tạo được 11 chuỗi
-            for i in range(len(frames) - self.seq_length + 1):
-                seq = frames[i : i + self.seq_length]
-                self.sequences.append(seq)
+            # Trượt cửa sổ (sliding window) để tạo các chuỗi liên tiếp
+            if len(frames) >= self.seq_length:
+                for i in range(len(frames) - self.seq_length + 1):
+                    seq = frames[i : i + self.seq_length]
+                    self.sequences.append(seq)
+        
+        print(f"✅ Dataset initialized: {len(self.sequences)} sequences found.")
 
     def __len__(self):
         return len(self.sequences)
@@ -36,38 +51,47 @@ class AnomalySequenceDataset(Dataset):
         seq_frames = []
 
         for frame_path in seq_paths:
-            # Đọc ảnh dưới dạng ảnh xám (Grayscale) để giảm tải tính toán cho model
+            # Đọc ảnh xám (Grayscale) để tiết kiệm VRAM
             img = cv2.imread(str(frame_path), cv2.IMREAD_GRAYSCALE)
+            
+            # Kiểm tra xem ảnh có đọc được không (phòng trường hợp file lỗi)
+            if img is None:
+                # resize_shape is (width, height) for cv2.resize, but numpy array is (height, width)
+                img = np.zeros((self.resize_shape[0], self.resize_shape[1]), dtype=np.uint8)
+            
+            # Resize ảnh
             img = cv2.resize(img, self.resize_shape)
             
-            # Chuẩn hóa giá trị pixel từ 0-255 về 0.0-1.0
+            # Chuẩn hóa (Normalization) về khoảng [0, 1]
             img = img.astype("float32") / 255.0
             seq_frames.append(img)
 
-        # Chuyển list các numpy array thành PyTorch Tensor
-        # Shape hiện tại: (seq_length, height, width)
-        tensor_seq = torch.tensor(seq_frames, dtype=torch.float32)
+        # Chuyển đổi tối ưu: list -> numpy -> tensor (Sửa lỗi UserWarning)
+        # Shape gốc: (seq_length, height, width)
+        tensor_seq = torch.from_numpy(np.array(seq_frames)).float()
         
-        # Pytorch yêu cầu shape phải có channel: (seq_length, channels, height, width)
-        # Vì là ảnh xám nên channels = 1
+        # Thêm chiều Channel (C=1) cho ảnh xám: (seq_length, 1, height, width)
         tensor_seq = tensor_seq.unsqueeze(1) 
 
         return tensor_seq
 
-# ================= CODE TEST NHANH =================
+# ================= ĐOẠN CODE TEST TRÊN COLAB =================
 if __name__ == "__main__":
-    print("⏳ Đang test thử Dataset Loader...")
+    # Thay đổi path này tùy theo bộ dữ liệu bạn muốn test
+    # Lưu ý: Chú ý chữ 'Train' viết hoa nếu dùng UCSD
+    TEST_PATH = "/content/drive/MyDrive/raw/ucsd/UCSDped1/Train"
     
-    # Ví dụ test với UCSD (đọc trực tiếp .tif trong từng sequence train)
-    test_path = "data/raw/ucsd/UCSDped1/train"
-    
-    if Path(test_path).exists():
-        dataset = AnomalySequenceDataset(dataset_path=test_path, seq_length=10)
-        print(f"✅ Đã tạo được tổng cộng {len(dataset)} chuỗi hành động (sequences).")
+    try:
+        dataset = AnomalySequenceDataset(
+            dataset_path=TEST_PATH, 
+            seq_length=10, 
+            resize_shape=(128, 128)
+        )
         
-        # Lấy thử chuỗi đầu tiên ra xem hình thù
-        sample_seq = dataset[0]
-        print(f"✅ Kích thước của 1 Tensor (Sequence): {sample_seq.shape}")
-        print("   -> Ý nghĩa: (10 frames, 1 kênh màu xám, cao 256, rộng 256)")
-    else:
-        print(f"⚠️ Không tìm thấy đường dẫn {test_path}")
+        if len(dataset) > 0:
+            sample = dataset[0]
+            print(f"🔥 Test thành công!")
+            print(f"Kích thước 1 mẫu: {sample.shape}")
+            print(f"Giá trị Min/Max: {sample.min():.2f} / {sample.max():.2f}")
+    except Exception as e:
+        print(e)

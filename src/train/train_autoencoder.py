@@ -130,7 +130,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dataset-path",
         type=str,
-        default="data/raw/ucsd/UCSDped1/train",
+        default="data/raw/ucsd/UCSDped1/Train",
         help="Path containing sequence folders (each folder contains frames).",
     )
     parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs.")
