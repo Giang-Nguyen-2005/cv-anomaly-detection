@@ -19,8 +19,8 @@ class AnomalySequenceDataset(Dataset):
         video_folders = [d for d in dataset_dir.iterdir() if d.is_dir()]
 
         for folder in video_folders:
-            # Lấy tất cả file .jpg và sắp xếp theo thứ tự thời gian
-            frames = sorted(list(folder.glob("*.jpg")))
+            # Hỗ trợ cả frame .jpg (Avenue) và .tif (UCSD)
+            frames = sorted(list(folder.glob("*.jpg")) + list(folder.glob("*.tif")))
             
             # Trượt cửa sổ để tạo các chuỗi (sequences)
             # Ví dụ có 20 frame, seq=10 -> tạo được 11 chuỗi
@@ -58,8 +58,8 @@ class AnomalySequenceDataset(Dataset):
 if __name__ == "__main__":
     print("⏳ Đang test thử Dataset Loader...")
     
-    # Giả sử test với tập Avenue
-    test_path = "data/processed/avenue" 
+    # Ví dụ test với UCSD (đọc trực tiếp .tif trong từng sequence train)
+    test_path = "data/raw/ucsd/UCSDped1/train"
     
     if Path(test_path).exists():
         dataset = AnomalySequenceDataset(dataset_path=test_path, seq_length=10)

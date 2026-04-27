@@ -14,3 +14,6 @@ data/raw/ucsd/*
 !data/raw/annotations/.gitkeep
 !data/raw/ucsd/.gitkeep
 !data/raw/avenue/.gitkeep
+
+**/__pycache__/
+*.pyc
